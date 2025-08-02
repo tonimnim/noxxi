@@ -58,6 +58,12 @@ dependencies:
   
   # Google Fonts
   google_fonts: ^6.1.0
+  
+  # Date formatting
+  intl: ^0.18.1
+  
+  # Share functionality
+  share_plus: ^7.2.1
 
 dev_dependencies:
   flutter_test:

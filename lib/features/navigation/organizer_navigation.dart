@@ -4,8 +4,10 @@ import 'package:noxxi/core/theme/app_colors.dart';
 import 'package:noxxi/features/home/screens/organizer_home_screen.dart';
 import 'package:noxxi/features/search/screens/search_screen.dart';
 import 'package:noxxi/features/events/screens/create_event_screen.dart';
+import 'package:noxxi/features/cart/screens/cart_screen.dart';
 import 'package:noxxi/features/tickets/screens/my_tickets_screen.dart';
 import 'package:noxxi/features/scanner/screens/scanner_screen.dart';
+import 'package:noxxi/features/profile/screens/profile_screen.dart';
 
 class OrganizerNavigation extends StatefulWidget {
   const OrganizerNavigation({super.key});
@@ -17,24 +19,32 @@ class OrganizerNavigation extends StatefulWidget {
 class _OrganizerNavigationState extends State<OrganizerNavigation> {
   int _selectedIndex = 0;
   
+  // Screens list with null for FAB position
   final List<Widget?> _screens = [
     const OrganizerHomeScreen(),
     const SearchScreen(),
-    null, // FAB - no screen
+    const CartScreen(),
+    null, // FAB position
     const MyTicketsScreen(),
     const ScannerScreen(),
+    const ProfileScreen(),
   ];
 
   void _onItemTapped(int index) {
-    if (index == 2) {
-      // Navigate to create event
+    if (index == 3) {
+      // Navigate to create event (FAB)
       Navigator.push(
         context,
         MaterialPageRoute(builder: (context) => const CreateEventScreen()),
       );
     } else {
       setState(() {
-        _selectedIndex = index;
+        // Adjust index for screens array
+        if (index < 3) {
+          _selectedIndex = index;
+        } else {
+          _selectedIndex = index - 1; // Skip FAB position
+        }
       });
     }
   }
@@ -42,7 +52,7 @@ class _OrganizerNavigationState extends State<OrganizerNavigation> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: _screens[_selectedIndex < 2 ? _selectedIndex : _selectedIndex > 2 ? _selectedIndex - 1 : 0],
+      body: _screens[_selectedIndex],
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           color: AppColors.scaffoldBackground,
@@ -57,15 +67,17 @@ class _OrganizerNavigationState extends State<OrganizerNavigation> {
         child: SafeArea(
           child: Container(
             height: 65,
-            padding: const EdgeInsets.symmetric(horizontal: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 2),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                _buildNavItem(0, Icons.dashboard_outlined, Icons.dashboard, 'Home'),
-                _buildNavItem(1, Icons.search_outlined, Icons.search, 'Search'),
+                _buildNavItem(0, Icons.home_outlined, Icons.home),
+                _buildNavItem(1, Icons.search_outlined, Icons.search),
+                _buildNavItem(2, Icons.shopping_cart_outlined, Icons.shopping_cart),
                 _buildCreateButton(),
-                _buildNavItem(3, Icons.confirmation_number_outlined, Icons.confirmation_number, 'Tickets'),
-                _buildNavItem(4, Icons.qr_code_scanner_outlined, Icons.qr_code_scanner, 'Scan'),
+                _buildNavItem(4, Icons.confirmation_number_outlined, Icons.confirmation_number),
+                _buildNavItem(5, Icons.qr_code_scanner_outlined, Icons.qr_code_scanner),
+                _buildNavItem(6, Icons.person_outline, Icons.person),
               ],
             ),
           ),
@@ -74,23 +86,25 @@ class _OrganizerNavigationState extends State<OrganizerNavigation> {
     );
   }
 
-  Widget _buildNavItem(int index, IconData icon, IconData activeIcon, String label) {
-    final isSelected = _selectedIndex == index || (_selectedIndex > 2 && index > 2 && _selectedIndex - 1 == index - 1);
+  Widget _buildNavItem(int index, IconData icon, IconData activeIcon) {
+    // Determine if this item is selected
+    bool isSelected = false;
+    if (index < 3 && _selectedIndex == index) {
+      isSelected = true;
+    } else if (index > 3 && _selectedIndex == index - 1) {
+      isSelected = true;
+    }
+    
     return GestureDetector(
       onTap: () => _onItemTapped(index),
       behavior: HitTestBehavior.opaque,
       child: Container(
-        width: 64,
+        width: 45,
         padding: const EdgeInsets.symmetric(vertical: 8),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              isSelected ? activeIcon : icon,
-              color: isSelected ? AppColors.primaryAccent : AppColors.darkText.withOpacity(0.6),
-              size: 28,
-            ),
-          ],
+        child: Icon(
+          isSelected ? activeIcon : icon,
+          color: isSelected ? AppColors.primaryAccent : AppColors.darkText.withOpacity(0.6),
+          size: 24,
         ),
       ),
     );
@@ -98,10 +112,10 @@ class _OrganizerNavigationState extends State<OrganizerNavigation> {
 
   Widget _buildCreateButton() {
     return GestureDetector(
-      onTap: () => _onItemTapped(2),
+      onTap: () => _onItemTapped(3),
       child: Container(
-        width: 56,
-        height: 56,
+        width: 45,
+        height: 45,
         decoration: BoxDecoration(
           color: AppColors.primaryAccent,
           shape: BoxShape.circle,
@@ -115,8 +129,8 @@ class _OrganizerNavigationState extends State<OrganizerNavigation> {
         ),
         child: const Icon(
           Icons.add,
-          color: AppColors.primaryText,
-          size: 28,
+          color: Colors.white,
+          size: 24,
         ),
       ),
     );

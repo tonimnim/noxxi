@@ -1,0 +1,76 @@
+-- Create saved_events table for users to save events
+CREATE TABLE IF NOT EXISTS public.saved_events (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    event_id UUID NOT NULL REFERENCES public.events(id) ON DELETE CASCADE,
+    saved_at TIMESTAMPTZ DEFAULT NOW(),
+    UNIQUE(user_id, event_id)
+);
+
+-- Create indexes for better performance
+CREATE INDEX idx_saved_events_user_id ON public.saved_events(user_id);
+CREATE INDEX idx_saved_events_event_id ON public.saved_events(event_id);
+CREATE INDEX idx_saved_events_saved_at ON public.saved_events(saved_at DESC);
+
+-- Enable Row Level Security
+ALTER TABLE public.saved_events ENABLE ROW LEVEL SECURITY;
+
+-- Create policies for saved_events table
+-- Users can view their own saved events
+CREATE POLICY "Users can view own saved events" ON public.saved_events
+    FOR SELECT USING (auth.uid() = user_id);
+
+-- Users can save events
+CREATE POLICY "Users can save events" ON public.saved_events
+    FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+-- Users can unsave their own events
+CREATE POLICY "Users can unsave own events" ON public.saved_events
+    FOR DELETE USING (auth.uid() = user_id);
+
+-- Create event_interactions table for analytics
+CREATE TABLE IF NOT EXISTS public.event_interactions (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+    event_id UUID NOT NULL REFERENCES public.events(id) ON DELETE CASCADE,
+    interaction_type VARCHAR(50) NOT NULL CHECK (interaction_type IN ('view', 'save', 'unsave', 'share', 'add_to_cart', 'remove_from_cart', 'impression')),
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Create indexes for event_interactions
+CREATE INDEX idx_event_interactions_user_id ON public.event_interactions(user_id);
+CREATE INDEX idx_event_interactions_event_id ON public.event_interactions(event_id);
+CREATE INDEX idx_event_interactions_type ON public.event_interactions(interaction_type);
+CREATE INDEX idx_event_interactions_created_at ON public.event_interactions(created_at DESC);
+
+-- Enable Row Level Security
+ALTER TABLE public.event_interactions ENABLE ROW LEVEL SECURITY;
+
+-- Create policies for event_interactions table
+-- Only authenticated users can create interactions
+CREATE POLICY "Authenticated users can create interactions" ON public.event_interactions
+    FOR INSERT WITH CHECK (auth.uid() IS NOT NULL);
+
+-- Users can view their own interactions
+CREATE POLICY "Users can view own interactions" ON public.event_interactions
+    FOR SELECT USING (auth.uid() = user_id OR user_id IS NULL);
+
+-- Function to increment view count
+CREATE OR REPLACE FUNCTION public.increment_view_count(event_id UUID)
+RETURNS VOID AS $$
+BEGIN
+    UPDATE public.events 
+    SET view_count = COALESCE(view_count, 0) + 1
+    WHERE id = event_id;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Function to increment share count
+CREATE OR REPLACE FUNCTION public.increment_share_count(event_id UUID)
+RETURNS VOID AS $$
+BEGIN
+    UPDATE public.events 
+    SET share_count = COALESCE(share_count, 0) + 1
+    WHERE id = event_id;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;

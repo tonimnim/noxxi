@@ -129,7 +129,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                     children: [
                       const AppLogo(
                         fontSize: 72,
-                        color: AppColors.primaryText,
+                        color: AppColors.pureBlack,
                       ),
                       const SizedBox(height: 80),
                       SizedBox(
