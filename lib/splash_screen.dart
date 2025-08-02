@@ -5,7 +5,7 @@ import 'package:noxxi/core/theme/app_colors.dart';
 import 'package:noxxi/core/widgets/app_logo.dart';
 import 'package:noxxi/core/widgets/auth_wrapper.dart';
 import 'package:noxxi/core/providers/auth_state_provider.dart';
-import 'package:noxxi/features/home/screens/home_screen.dart';
+import 'package:noxxi/features/navigation/navigation_wrapper.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -69,7 +69,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
       context,
       MaterialPageRoute(
         builder: (context) => const AuthWrapper(
-          authenticatedWidget: HomeScreen(),
+          authenticatedWidget: NavigationWrapper(),
         ),
       ),
     );
@@ -101,29 +101,21 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
 
   @override
   Widget build(BuildContext context) {
+    final backgroundColor = Theme.of(context).scaffoldBackgroundColor;
+    
     // Set system UI overlay style
     SystemChrome.setSystemUIOverlayStyle(
-      const SystemUiOverlayStyle(
+      SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
         statusBarIconBrightness: Brightness.light,
-        systemNavigationBarColor: AppColors.primaryBackground,
+        systemNavigationBarColor: backgroundColor,
         systemNavigationBarIconBrightness: Brightness.light,
       ),
     );
     
     return Scaffold(
-      backgroundColor: AppColors.primaryBackground,
       body: Container(
-        decoration: BoxDecoration(
-          gradient: RadialGradient(
-            center: Alignment.center,
-            radius: 1.5,
-            colors: [
-              AppColors.primaryBackground.withOpacity(0.8),
-              AppColors.primaryBackground,
-            ],
-          ),
-        ),
+        color: backgroundColor,
         child: Center(
           child: AnimatedBuilder(
             animation: _animationController,

@@ -19,7 +19,7 @@ class AppLogo extends StatelessWidget {
         fontFamily: 'Biski',
         fontSize: fontSize,
         fontWeight: FontWeight.normal,
-        color: color ?? AppColors.primaryText,
+        color: color ?? AppColors.primaryBackground,
         letterSpacing: -1.0,
       ),
     );

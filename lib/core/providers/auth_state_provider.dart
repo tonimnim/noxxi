@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:noxxi/features/auth/services/auth_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthStateProvider extends ChangeNotifier {
   final AuthService _authService = AuthService();
@@ -58,6 +59,12 @@ class AuthStateProvider extends ChangeNotifier {
   Future<void> signOut() async {
     await _authService.signOut();
     _user = null;
+    
+    // Clear cached user role
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('user_role');
+    await prefs.remove('user_id');
+    
     notifyListeners();
   }
   

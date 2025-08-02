@@ -24,7 +24,7 @@ class MyApp extends StatelessWidget {
       child: MaterialApp(
         title: 'Noxxi',
         debugShowCheckedModeBanner: false,
-        theme: AppTheme.darkTheme,
+        theme: AppTheme.blackTheme,
         darkTheme: AppTheme.blackTheme,
         themeMode: ThemeMode.dark,
         home: const SplashScreen(),

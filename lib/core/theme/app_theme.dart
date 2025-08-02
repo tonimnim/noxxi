@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'app_colors.dart';
 
 class AppTheme {
@@ -8,6 +9,7 @@ class AppTheme {
       brightness: Brightness.dark,
       scaffoldBackgroundColor: AppColors.primaryBackground,
       primaryColor: AppColors.primaryAccent,
+      fontFamily: GoogleFonts.sora().fontFamily,
       
       colorScheme: const ColorScheme.dark(
         primary: AppColors.primaryAccent,
@@ -17,22 +19,22 @@ class AppTheme {
         error: AppColors.error,
         onPrimary: AppColors.primaryText,
         onSecondary: AppColors.primaryText,
-        onSurface: AppColors.primaryText,
+        onSurface: AppColors.darkText,
         onBackground: AppColors.primaryText,
         onError: AppColors.primaryText,
       ),
       
-      appBarTheme: const AppBarTheme(
+      appBarTheme: AppBarTheme(
         backgroundColor: AppColors.primaryBackground,
         elevation: 0,
         centerTitle: true,
-        titleTextStyle: TextStyle(
+        titleTextStyle: GoogleFonts.sora(
           color: AppColors.primaryText,
           fontSize: 18,
           fontWeight: FontWeight.w600,
         ),
-        iconTheme: IconThemeData(color: AppColors.primaryText),
-        systemOverlayStyle: SystemUiOverlayStyle(
+        iconTheme: const IconThemeData(color: AppColors.primaryText),
+        systemOverlayStyle: const SystemUiOverlayStyle(
           statusBarColor: Colors.transparent,
           statusBarIconBrightness: Brightness.light,
           statusBarBrightness: Brightness.dark,
@@ -223,15 +225,27 @@ class AppTheme {
   
   static ThemeData get blackTheme {
     return darkTheme.copyWith(
-      scaffoldBackgroundColor: AppColors.pureBlack,
+      scaffoldBackgroundColor: AppColors.scaffoldBackground,
       colorScheme: darkTheme.colorScheme.copyWith(
-        background: AppColors.pureBlack,
+        background: AppColors.scaffoldBackground,
+        onBackground: AppColors.darkText,
+        onSurface: AppColors.darkText,
       ),
       appBarTheme: darkTheme.appBarTheme.copyWith(
-        backgroundColor: AppColors.pureBlack,
+        backgroundColor: AppColors.scaffoldBackground,
+        titleTextStyle: GoogleFonts.sora(
+          color: AppColors.darkText,
+          fontSize: 18,
+          fontWeight: FontWeight.w600,
+        ),
+        iconTheme: const IconThemeData(color: AppColors.darkText),
       ),
       cardTheme: darkTheme.cardTheme.copyWith(
-        color: AppColors.primaryBackground,
+        color: AppColors.cardBackground,
+      ),
+      textTheme: darkTheme.textTheme.apply(
+        bodyColor: AppColors.darkText,
+        displayColor: AppColors.darkText,
       ),
     );
   }
