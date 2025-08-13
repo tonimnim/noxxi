@@ -1,5 +1,5 @@
 /// Event model for the home feed
-/// Maps to the events table in Supabase
+/// Maps to the events table in the database
 class EventFeedItem {
   final String id;
   final String title;
@@ -55,7 +55,7 @@ class EventFeedItem {
     this.isInCart = false,
   });
 
-  /// Create from Supabase JSON response
+  /// Create from API JSON response
   factory EventFeedItem.fromJson(Map<String, dynamic> json) {
     // Parse ticket types from JSONB
     List<TicketType> tickets = [];

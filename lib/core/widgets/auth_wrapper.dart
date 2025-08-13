@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:noxxi/core/providers/auth_state_provider.dart';
-import 'package:noxxi/features/auth/screens/login_screen.dart';
+import 'package:noxxi/features/auth/presentation/screens/login_screen.dart';
 
 class AuthWrapper extends StatelessWidget {
   final Widget authenticatedWidget;
@@ -24,12 +24,9 @@ class AuthWrapper extends StatelessWidget {
           );
         }
         
-        if (authState.isAuthenticated) {
-          return authenticatedWidget;
-        }
-        
-        // Not authenticated, show login
-        return const LoginScreen();
+        // Allow both authenticated and unauthenticated users to browse
+        // The NavigationWrapper will handle the differences
+        return authenticatedWidget;
       },
     );
   }

@@ -12,7 +12,7 @@ class ScannerScreen extends StatelessWidget {
           child: Text(
             'QR Scanner',
             style: TextStyle(
-              color: AppColors.primaryText,
+              color: AppColors.darkText,
               fontSize: 24,
               fontFamily: 'Raleway',
             ),

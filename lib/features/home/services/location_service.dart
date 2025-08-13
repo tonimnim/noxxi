@@ -1,57 +1,65 @@
 import 'package:flutter/foundation.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../../core/api/api_client.dart';
+import '../../../core/api/api_endpoints.dart';
 
 /// Service to handle location-based features
 class LocationService {
-  final _supabase = Supabase.instance.client;
+  final ApiClient _apiClient = ApiClient.instance;
   static const String _selectedCityKey = 'noxxi_selected_city';
   static const String _recentCitiesKey = 'noxxi_recent_cities';
   
   /// Get available cities from events
   Future<List<String>> getAvailableCities() async {
     try {
-      final response = await _supabase
-          .from('events')
-          .select('city')
-          .eq('status', 'published')
-          .gte('event_date', DateTime.now().toIso8601String())
-          .not('city', 'is', null);
+      final response = await _apiClient.get<List<dynamic>>(
+        ApiEndpoints.events,
+        queryParameters: {
+          'select': 'city',
+          'filter[status]': 'published',
+          'filter[date_after]': DateTime.now().toIso8601String(),
+          'distinct': 'city',
+        },
+      );
       
-      final cities = (response as List)
-          .map((item) => item['city'] as String)
-          .where((city) => city.isNotEmpty)
+      final cities = response
+          .map((item) => item['city'] as String?)
+          .where((city) => city != null && city.isNotEmpty)
+          .cast<String>()
           .toSet()
-          .toList()
-        ..sort();
+          .toList();
       
+      cities.sort();
       return cities;
     } catch (e) {
       debugPrint('Error fetching cities: $e');
-      return _getDefaultCities();
+      return [];
     }
   }
   
-  /// Get popular cities based on event count
+  /// Get popular cities with event counts
   Future<List<CityInfo>> getPopularCities({int limit = 10}) async {
     try {
-      final response = await _supabase.rpc('get_popular_cities', params: {
-        'limit_count': limit,
-      });
+      // This would ideally be a dedicated endpoint in Laravel
+      final response = await _apiClient.get<List<dynamic>>(
+        '/cities/popular',
+        queryParameters: {'limit': limit},
+      );
       
-      return (response as List)
-          .map((json) => CityInfo.fromJson(json))
-          .toList();
+      return response.map((json) => CityInfo.fromJson(json)).toList();
     } catch (e) {
       debugPrint('Error fetching popular cities: $e');
-      // Fallback to default cities
-      return _getDefaultCities()
-          .map((city) => CityInfo(name: city, eventCount: 0))
-          .toList();
+      // Fallback to getting available cities
+      final cities = await getAvailableCities();
+      return cities.take(limit).map((city) => CityInfo(
+        name: city,
+        eventCount: 0,
+        imageUrl: null,
+      )).toList();
     }
   }
   
-  /// Get user's selected city
+  /// Get selected city from local storage
   Future<String?> getSelectedCity() async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -62,7 +70,7 @@ class LocationService {
     }
   }
   
-  /// Set user's selected city
+  /// Set selected city in local storage
   Future<void> setSelectedCity(String city) async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -75,12 +83,21 @@ class LocationService {
     }
   }
   
-  /// Get user's recent cities
-  Future<List<String>> getRecentCities({int limit = 5}) async {
+  /// Clear selected city
+  Future<void> clearSelectedCity() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final recentCities = prefs.getStringList(_recentCitiesKey) ?? [];
-      return recentCities.take(limit).toList();
+      await prefs.remove(_selectedCityKey);
+    } catch (e) {
+      debugPrint('Error clearing selected city: $e');
+    }
+  }
+  
+  /// Get recent cities from local storage
+  Future<List<String>> getRecentCities() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      return prefs.getStringList(_recentCitiesKey) ?? [];
     } catch (e) {
       debugPrint('Error getting recent cities: $e');
       return [];
@@ -91,15 +108,17 @@ class LocationService {
   Future<void> _addToRecentCities(String city) async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final recentCities = prefs.getStringList(_recentCitiesKey) ?? [];
+      List<String> recentCities = prefs.getStringList(_recentCitiesKey) ?? [];
       
-      // Remove if already exists and add to front
+      // Remove if already exists
       recentCities.remove(city);
+      
+      // Add to beginning
       recentCities.insert(0, city);
       
-      // Keep only last 10 cities
+      // Keep only last 10
       if (recentCities.length > 10) {
-        recentCities.removeRange(10, recentCities.length);
+        recentCities = recentCities.take(10).toList();
       }
       
       await prefs.setStringList(_recentCitiesKey, recentCities);
@@ -108,69 +127,26 @@ class LocationService {
     }
   }
   
-  /// Get venues for a specific city
+  /// Get venues in a specific city
   Future<List<VenueInfo>> getVenuesInCity(String city) async {
     try {
-      final response = await _supabase
-          .from('events')
-          .select('venue_name, venue_address, latitude, longitude')
-          .eq('city', city)
-          .eq('status', 'published')
-          .gte('event_date', DateTime.now().toIso8601String())
-          .not('venue_name', 'is', null);
+      final response = await _apiClient.get<List<dynamic>>(
+        ApiEndpoints.events,
+        queryParameters: {
+          'select': 'venue_name,venue_address,latitude,longitude',
+          'filter[city]': city,
+          'filter[status]': 'published',
+          'distinct': 'venue_name',
+        },
+      );
       
-      final venuesMap = <String, VenueInfo>{};
-      
-      for (final item in response as List) {
-        final venueName = item['venue_name'] as String;
-        if (!venuesMap.containsKey(venueName)) {
-          venuesMap[venueName] = VenueInfo(
-            name: venueName,
-            address: item['venue_address'],
-            city: city,
-            latitude: item['latitude']?.toDouble(),
-            longitude: item['longitude']?.toDouble(),
-            eventCount: 1,
-          );
-        } else {
-          venuesMap[venueName]!.eventCount++;
-        }
-      }
-      
-      final venues = venuesMap.values.toList()
-        ..sort((a, b) => b.eventCount.compareTo(a.eventCount));
-      
-      return venues;
+      return response
+          .where((item) => item['venue_name'] != null)
+          .map((json) => VenueInfo.fromJson(json))
+          .toList();
     } catch (e) {
       debugPrint('Error fetching venues: $e');
       return [];
-    }
-  }
-  
-  /// Get default cities for Kenya
-  List<String> _getDefaultCities() {
-    return [
-      'Nairobi',
-      'Mombasa',
-      'Kisumu',
-      'Nakuru',
-      'Eldoret',
-      'Thika',
-      'Nyeri',
-      'Machakos',
-      'Meru',
-      'Kakamega',
-    ];
-  }
-  
-  /// Clear location preferences
-  Future<void> clearLocationPreferences() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.remove(_selectedCityKey);
-      await prefs.remove(_recentCitiesKey);
-    } catch (e) {
-      debugPrint('Error clearing location preferences: $e');
     }
   }
 }
@@ -178,23 +154,20 @@ class LocationService {
 /// City information model
 class CityInfo {
   final String name;
-  int eventCount;
-  final double? latitude;
-  final double? longitude;
+  final int eventCount;
+  final String? imageUrl;
   
   CityInfo({
     required this.name,
     required this.eventCount,
-    this.latitude,
-    this.longitude,
+    this.imageUrl,
   });
   
   factory CityInfo.fromJson(Map<String, dynamic> json) {
     return CityInfo(
-      name: json['city'] ?? json['name'],
+      name: json['name'] ?? '',
       eventCount: json['event_count'] ?? 0,
-      latitude: json['latitude']?.toDouble(),
-      longitude: json['longitude']?.toDouble(),
+      imageUrl: json['image_url'],
     );
   }
 }
@@ -203,24 +176,22 @@ class CityInfo {
 class VenueInfo {
   final String name;
   final String? address;
-  final String city;
   final double? latitude;
   final double? longitude;
-  int eventCount;
   
   VenueInfo({
     required this.name,
     this.address,
-    required this.city,
     this.latitude,
     this.longitude,
-    this.eventCount = 0,
   });
   
-  String get fullAddress {
-    if (address != null && address!.isNotEmpty) {
-      return '$address, $city';
-    }
-    return city;
+  factory VenueInfo.fromJson(Map<String, dynamic> json) {
+    return VenueInfo(
+      name: json['venue_name'] ?? '',
+      address: json['venue_address'],
+      latitude: json['latitude']?.toDouble(),
+      longitude: json['longitude']?.toDouble(),
+    );
   }
 }

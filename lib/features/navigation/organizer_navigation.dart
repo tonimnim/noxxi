@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:noxxi/core/theme/app_colors.dart';
-import 'package:noxxi/features/home/screens/organizer_home_screen.dart';
+import 'package:noxxi/features/home/screens/trending_home_screen.dart';
 import 'package:noxxi/features/search/screens/search_screen.dart';
 import 'package:noxxi/features/events/screens/create_event_screen.dart';
 import 'package:noxxi/features/cart/screens/cart_screen.dart';
-import 'package:noxxi/features/tickets/screens/my_tickets_screen.dart';
+import 'package:noxxi/features/tickets/screens/tickets_screen.dart';
 import 'package:noxxi/features/scanner/screens/scanner_screen.dart';
 import 'package:noxxi/features/profile/screens/profile_screen.dart';
 
@@ -21,11 +21,11 @@ class _OrganizerNavigationState extends State<OrganizerNavigation> {
   
   // Screens list with null for FAB position
   final List<Widget?> _screens = [
-    const OrganizerHomeScreen(),
+    const TrendingHomeScreen(), // Organizers see same home for now
     const SearchScreen(),
     const CartScreen(),
     null, // FAB position
-    const MyTicketsScreen(),
+    const TicketsScreen(),
     const ScannerScreen(),
     const ProfileScreen(),
   ];
@@ -55,10 +55,10 @@ class _OrganizerNavigationState extends State<OrganizerNavigation> {
       body: _screens[_selectedIndex],
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
-          color: AppColors.scaffoldBackground,
+          color: Theme.of(context).scaffoldBackgroundColor,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.1),
+              color: Colors.black.withOpacity(0.05),
               blurRadius: 10,
               offset: const Offset(0, -5),
             ),

@@ -1,9 +1,11 @@
 import 'package:flutter/foundation.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:flutter/material.dart';
+import '../../../core/api/api_client.dart';
+import '../../../core/api/api_endpoints.dart';
 
 /// Service to handle event categories
 class CategoryService {
-  final _supabase = Supabase.instance.client;
+  final ApiClient _apiClient = ApiClient.instance;
   
   // Cache categories to reduce API calls
   List<EventCategory>? _cachedCategories;
@@ -21,13 +23,15 @@ class CategoryService {
     }
     
     try {
-      final response = await _supabase
-          .from('event_categories')
-          .select('*')
-          .eq('is_active', true)
-          .order('sort_order', ascending: true);
+      final response = await _apiClient.get<List<dynamic>>(
+        ApiEndpoints.eventCategories,
+        queryParameters: {
+          'filter[is_active]': 'true',
+          'sort': 'sort_order',
+        },
+      );
       
-      _cachedCategories = (response as List)
+      _cachedCategories = response
           .map((json) => EventCategory.fromJson(json))
           .toList();
       _lastFetchTime = DateTime.now();
@@ -60,19 +64,16 @@ class CategoryService {
   /// Get popular categories based on event count
   Future<List<EventCategory>> fetchPopularCategories({int limit = 5}) async {
     try {
-      final response = await _supabase
-          .from('event_categories')
-          .select('''
-            *,
-            events!inner(id)
-          ''')
-          .eq('is_active', true)
-          .eq('events.status', 'published')
-          .gte('events.event_date', DateTime.now().toIso8601String())
-          .order('events.count', ascending: false)
-          .limit(limit);
+      final response = await _apiClient.get<List<dynamic>>(
+        ApiEndpoints.eventCategories,
+        queryParameters: {
+          'filter[is_active]': 'true',
+          'sort': '-event_count',
+          'limit': limit,
+        },
+      );
       
-      return (response as List)
+      return response
           .map((json) => EventCategory.fromJson(json))
           .toList();
     } catch (e) {
@@ -80,6 +81,48 @@ class CategoryService {
       // Fallback to regular categories
       final allCategories = await fetchCategories();
       return allCategories.take(limit).toList();
+    }
+  }
+  
+  /// Get subcategories for a main category
+  Future<List<CategoryItem>> getSubcategories(String parentCategoryId) async {
+    try {
+      final response = await _apiClient.get<List<dynamic>>(
+        ApiEndpoints.eventCategories,
+        queryParameters: {
+          'filter[parent_id]': parentCategoryId,
+          'filter[is_active]': 'true',
+          'sort': 'display_order',
+        },
+      );
+      
+      return response
+          .map((json) => CategoryItem.fromJson(json))
+          .toList();
+    } catch (e) {
+      debugPrint('Error fetching subcategories: $e');
+      return [];
+    }
+  }
+  
+  /// Get main categories (categories with no parent)
+  Future<List<CategoryItem>> getMainCategories() async {
+    try {
+      final response = await _apiClient.get<List<dynamic>>(
+        ApiEndpoints.eventCategories,
+        queryParameters: {
+          'filter[parent_id]': 'null',
+          'filter[is_active]': 'true',
+          'sort': 'display_order',
+        },
+      );
+      
+      return response
+          .map((json) => CategoryItem.fromJson(json))
+          .toList();
+    } catch (e) {
+      debugPrint('Error fetching main categories: $e');
+      return [];
     }
   }
   
@@ -182,5 +225,32 @@ class EventCategory {
       default:
         return Icons.event;
     }
+  }
+}
+
+/// Category item model for hierarchical categories
+class CategoryItem {
+  final String id;
+  final String name;
+  final String slug;
+  final String? parentId;
+  final int displayOrder;
+  
+  CategoryItem({
+    required this.id,
+    required this.name,
+    required this.slug,
+    this.parentId,
+    this.displayOrder = 0,
+  });
+  
+  factory CategoryItem.fromJson(Map<String, dynamic> json) {
+    return CategoryItem(
+      id: json['id'],
+      name: json['name'],
+      slug: json['slug'],
+      parentId: json['parent_id'],
+      displayOrder: json['display_order'] ?? 0,
+    );
   }
 }

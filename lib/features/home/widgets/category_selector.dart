@@ -38,13 +38,6 @@ class CategorySelector extends StatelessWidget {
             onTap: () => onCategorySelected('cinema'),
           ),
           _CategoryItem(
-            title: 'Travel',
-            icon: Icons.directions_bus,
-            categoryId: 'travel',
-            isSelected: selectedCategoryId == 'travel',
-            onTap: () => onCategorySelected('travel'),
-          ),
-          _CategoryItem(
             title: 'Experiences',
             icon: Icons.explore,
             categoryId: 'experiences',

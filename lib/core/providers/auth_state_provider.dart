@@ -1,76 +1,95 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:noxxi/features/auth/services/auth_service.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../features/auth/domain/entities/user.dart';
+import '../../features/auth/presentation/providers/auth_provider.dart';
 
 class AuthStateProvider extends ChangeNotifier {
-  final AuthService _authService = AuthService();
-  StreamSubscription<AuthState>? _authSubscription;
-  
-  User? _user;
+  UserEntity? _user;
   bool _isLoading = true;
+  String? _authToken;
   
-  User? get user => _user;
+  UserEntity? get user => _user;
   bool get isLoading => _isLoading;
-  bool get isAuthenticated => _user != null;
+  bool get isAuthenticated => _user != null && _authToken != null;
+  String? get authToken => _authToken;
   
   AuthStateProvider() {
     _initialize();
   }
   
-  void _initialize() {
-    // Check initial auth state
-    _user = _authService.currentUser;
+  Future<void> _initialize() async {
+    // Load saved user data from SharedPreferences
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('auth_token');
+    
+    if (token != null) {
+      _authToken = token;
+      // Try to load user data
+      final userId = prefs.getString('user_id');
+      final userName = prefs.getString('user_name');
+      final userEmail = prefs.getString('user_email');
+      final userPhone = prefs.getString('user_phone');
+      
+      if (userId != null) {
+        // Create a minimal user entity from cached data
+        // Full user data will be loaded when needed
+        _user = UserEntity(
+          id: int.tryParse(userId) ?? 0,
+          fullName: userName ?? '',
+          email: userEmail ?? '',
+          phoneNumber: userPhone,
+          role: UserRole.attendee,
+          emailVerified: true,
+          createdAt: DateTime.now(),
+          updatedAt: DateTime.now(),
+        );
+      }
+    }
+    
     _isLoading = false;
     notifyListeners();
+  }
+  
+  Future<void> setUser(UserEntity user, String token) async {
+    _user = user;
+    _authToken = token;
     
-    // Listen to auth state changes
-    _authSubscription = _authService.listenToAuthChanges((data) {
-      final AuthChangeEvent event = data.event;
-      final Session? session = data.session;
-      
-      switch (event) {
-        case AuthChangeEvent.signedIn:
-          _user = session?.user;
-          break;
-        case AuthChangeEvent.signedOut:
-          _user = null;
-          break;
-        case AuthChangeEvent.userUpdated:
-          _user = session?.user;
-          break;
-        case AuthChangeEvent.tokenRefreshed:
-          _user = session?.user;
-          break;
-        default:
-          break;
-      }
-      
-      notifyListeners();
-    });
+    // Save to SharedPreferences
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('auth_token', token);
+    await prefs.setString('user_id', user.id);
+    await prefs.setString('user_name', user.name);
+    await prefs.setString('user_email', user.email);
+    await prefs.setString('user_phone', user.phone);
+    await prefs.setString('user_role', user.role);
     
-    // Periodically check and refresh token
-    Timer.periodic(const Duration(minutes: 5), (_) {
-      _authService.checkAndRefreshToken();
-    });
+    notifyListeners();
   }
   
   Future<void> signOut() async {
-    await _authService.signOut();
     _user = null;
+    _authToken = null;
     
-    // Clear cached user role
+    // Clear cached data
     final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('user_role');
+    await prefs.remove('auth_token');
     await prefs.remove('user_id');
+    await prefs.remove('user_name');
+    await prefs.remove('user_email');
+    await prefs.remove('user_phone');
+    await prefs.remove('user_role');
     
+    notifyListeners();
+  }
+  
+  void updateUser(UserEntity user) {
+    _user = user;
     notifyListeners();
   }
   
   @override
   void dispose() {
-    _authSubscription?.cancel();
     super.dispose();
   }
 }

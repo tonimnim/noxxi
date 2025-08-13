@@ -1,18 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:provider/provider.dart';
-import 'package:noxxi/core/services/supabase_service.dart';
 import 'package:noxxi/core/providers/auth_state_provider.dart';
 import 'package:noxxi/core/theme/app_theme.dart';
 import 'package:noxxi/splash_screen.dart';
 import 'package:noxxi/core/services/memory_manager.dart';
 import 'package:noxxi/core/services/image_cache_manager.dart';
+import 'package:noxxi/features/home/screens/category_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
-  // Initialize Supabase
-  await SupabaseService().initialize();
   
   // Initialize performance optimizations
   ImageCacheManager().init();
@@ -31,14 +28,22 @@ class MyApp extends StatelessWidget {
       child: MaterialApp(
         title: 'Noxxi',
         debugShowCheckedModeBanner: false,
-        theme: AppTheme.blackTheme,
-        darkTheme: AppTheme.blackTheme,
-        themeMode: ThemeMode.dark,
-        home: kDebugMode
-            ? PerformanceMonitor(
-                child: const SplashScreen(),
-              )
-            : const SplashScreen(),
+        theme: AppTheme.lightTheme,
+        darkTheme: AppTheme.lightTheme,
+        themeMode: ThemeMode.light,
+        home: const SplashScreen(),
+        onGenerateRoute: (settings) {
+          if (settings.name == '/category') {
+            final args = settings.arguments as Map<String, dynamic>;
+            return MaterialPageRoute(
+              builder: (context) => CategoryPage(
+                categoryId: args['categoryId'],
+                categoryName: args['categoryName'],
+              ),
+            );
+          }
+          return null;
+        },
       ),
     );
   }

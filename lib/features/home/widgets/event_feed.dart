@@ -135,7 +135,7 @@ class _EventFeedState extends State<EventFeed> {
       child: ListView.builder(
         controller: _scrollController,
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
+        padding: const EdgeInsets.fromLTRB(0, 8, 0, 80),
         itemCount: widget.events.length + (widget.hasMore ? 1 : 0),
         itemBuilder: (context, index) {
           // Loading indicator at the bottom

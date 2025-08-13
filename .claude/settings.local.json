@@ -3,7 +3,8 @@
   "permissions": {
     "allow": [
       "Bash(mv:*)",
-      "Bash(mkdir:*)"
+      "Bash(mkdir:*)",
+      "Bash(flutter pub remove:*)"
     ],
     "deny": []
   }

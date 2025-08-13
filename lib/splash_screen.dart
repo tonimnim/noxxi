@@ -127,9 +127,9 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const AppLogo(
+                       const AppLogo(
                         fontSize: 72,
-                        color: AppColors.pureBlack,
+                         color: AppColors.darkText,
                       ),
                       const SizedBox(height: 80),
                       SizedBox(

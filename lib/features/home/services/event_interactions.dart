@@ -1,11 +1,11 @@
 import 'package:flutter/foundation.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../../core/api/api_client.dart';
 
 /// Service to handle event interactions and analytics
 /// Manages saves, cart, shares, and impression tracking
 class EventInteractions {
-  final _supabase = Supabase.instance.client;
+  final ApiClient _apiClient = ApiClient.instance;
   static const String _cartKey = 'noxxi_cart_items';
   static const String _impressionKey = 'noxxi_tracked_impressions';
   
@@ -24,11 +24,8 @@ class EventInteractions {
         cartItems.add(eventId);
         await prefs.setStringList(_cartKey, cartItems);
         
-        // Track add to cart
-        final userId = _supabase.auth.currentUser?.id;
-        if (userId != null) {
-          await _trackInteraction(userId, eventId, 'add_to_cart');
-        }
+        // Track add to cart via API
+        await _trackInteraction(eventId, 'add_to_cart');
       }
     } catch (e) {
       debugPrint('Error adding to cart: $e');
@@ -45,11 +42,8 @@ class EventInteractions {
       cartItems.remove(eventId);
       await prefs.setStringList(_cartKey, cartItems);
       
-      // Track remove from cart
-      final userId = _supabase.auth.currentUser?.id;
-      if (userId != null) {
-        await _trackInteraction(userId, eventId, 'remove_from_cart');
-      }
+      // Track remove from cart via API
+      await _trackInteraction(eventId, 'remove_from_cart');
     } catch (e) {
       debugPrint('Error removing from cart: $e');
       rethrow;
@@ -71,16 +65,12 @@ class EventInteractions {
   /// Track share action
   Future<void> trackShare(String eventId) async {
     try {
-      // Increment share count in database
-      await _supabase.rpc('increment_share_count', params: {
-        'event_id': eventId,
-      });
+      // Track share via API
+      await _apiClient.post<Map<String, dynamic>>(
+        '/events/$eventId/share',
+      );
       
-      // Track share interaction
-      final userId = _supabase.auth.currentUser?.id;
-      if (userId != null) {
-        await _trackInteraction(userId, eventId, 'share');
-      }
+      await _trackInteraction(eventId, 'share');
     } catch (e) {
       debugPrint('Error tracking share: $e');
     }
@@ -108,23 +98,17 @@ class EventInteractions {
       // Save updated tracked list
       await prefs.setStringList(_impressionKey, trackedImpressions);
       
-      // Batch increment view counts
+      // Batch track impressions via API
       for (final eventId in newImpressions) {
-        _supabase.rpc('increment_view_count', params: {
-          'event_id': eventId,
-        }).then((_) {
+        _apiClient.post<Map<String, dynamic>>(
+          '/events/$eventId/view',
+        ).then((_) {
           debugPrint('Tracked impression for event: $eventId');
         }).catchError((e) {
           debugPrint('Error tracking impression: $e');
         });
-      }
-      
-      // Track user impressions if logged in
-      final userId = _supabase.auth.currentUser?.id;
-      if (userId != null) {
-        for (final eventId in newImpressions) {
-          _trackInteraction(userId, eventId, 'impression', priority: false);
-        }
+        
+        _trackInteraction(eventId, 'impression', priority: false);
       }
     } catch (e) {
       debugPrint('Error tracking impressions: $e');
@@ -133,26 +117,29 @@ class EventInteractions {
   
   /// Track user interaction with event
   Future<void> _trackInteraction(
-    String userId,
     String eventId,
     String interactionType, {
     bool priority = true,
   }) async {
     try {
       final data = {
-        'user_id': userId,
         'event_id': eventId,
         'interaction_type': interactionType,
-        'created_at': DateTime.now().toIso8601String(),
       };
       
       if (priority) {
         // Immediate tracking for important actions
-        await _supabase.from('event_interactions').insert(data);
+        await _apiClient.post<Map<String, dynamic>>(
+          '/analytics/interactions',
+          data: data,
+        );
       } else {
         // Delayed tracking for less important actions
         Future.delayed(const Duration(seconds: 2), () {
-          _supabase.from('event_interactions').insert(data).catchError((e) {
+          _apiClient.post<Map<String, dynamic>>(
+            '/analytics/interactions',
+            data: data,
+          ).catchError((e) {
             debugPrint('Error tracking interaction: $e');
           });
         });
@@ -166,11 +153,9 @@ class EventInteractions {
   /// Get interaction analytics for an event
   Future<Map<String, int>> getEventAnalytics(String eventId) async {
     try {
-      final response = await _supabase
-          .from('events')
-          .select('view_count, share_count, tickets_sold')
-          .eq('id', eventId)
-          .single();
+      final response = await _apiClient.get<Map<String, dynamic>>(
+        '/events/$eventId/analytics',
+      );
       
       // Get cart count from local storage
       final cartItems = await getCartItems();
