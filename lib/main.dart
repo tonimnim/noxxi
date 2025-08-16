@@ -7,6 +7,10 @@ import 'package:noxxi/splash_screen.dart';
 import 'package:noxxi/core/services/memory_manager.dart';
 import 'package:noxxi/core/services/image_cache_manager.dart';
 import 'package:noxxi/features/home/screens/category_page.dart';
+import 'package:noxxi/features/auth/presentation/screens/login_screen.dart';
+import 'package:noxxi/features/auth/presentation/screens/register_screen.dart';
+import 'package:noxxi/features/auth/presentation/screens/forgot_password_screen.dart';
+import 'package:noxxi/features/navigation/navigation_wrapper.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -32,6 +36,12 @@ class MyApp extends StatelessWidget {
         darkTheme: AppTheme.lightTheme,
         themeMode: ThemeMode.light,
         home: const SplashScreen(),
+        routes: {
+          '/login': (context) => const LoginScreen(),
+          '/register': (context) => const RegisterScreen(),
+          '/forgot-password': (context) => const ForgotPasswordScreen(),
+          '/home': (context) => const NavigationWrapper(),
+        },
         onGenerateRoute: (settings) {
           if (settings.name == '/category') {
             final args = settings.arguments as Map<String, dynamic>;

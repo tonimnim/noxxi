@@ -36,22 +36,30 @@ class AuthDataModel {
   final String? tokenType;
   final int? expiresIn;
   final UserModel? user;
+  // No refresh token as tokens never expire (100 years)
+  final String? expiresAt;
+  final String? refreshExpiresAt;
 
   AuthDataModel({
     this.accessToken,
     this.tokenType,
     this.expiresIn,
     this.user,
+    this.expiresAt,
+    this.refreshExpiresAt,
   });
 
   factory AuthDataModel.fromJson(Map<String, dynamic> json) {
     return AuthDataModel(
-      accessToken: json['access_token'] ?? json['token'],
+      // Handle both 'token' and 'access_token' keys from Laravel
+      accessToken: json['token'] ?? json['access_token'],
       tokenType: json['token_type'] ?? 'Bearer',
-      expiresIn: json['expires_in'],
+      expiresIn: json['expires_in'], // Kept for compatibility but ignored
       user: json['user'] != null 
           ? UserModel.fromJson(json['user'])
           : null,
+      expiresAt: json['expires_at'], // 100 years from now
+      refreshExpiresAt: json['refresh_expires_at'], // 100 years from now
     );
   }
 }

@@ -81,6 +81,8 @@ class AuthProvider extends ChangeNotifier {
     required String password,
     required String passwordConfirmation,
     String? phoneNumber,
+    String? country,
+    String? preferredCurrency,
   }) async {
     _setStatus(AuthStatus.loading);
     _clearError();
@@ -91,6 +93,8 @@ class AuthProvider extends ChangeNotifier {
       password: password,
       passwordConfirmation: passwordConfirmation,
       phoneNumber: phoneNumber,
+      country: country,
+      preferredCurrency: preferredCurrency,
     );
     
     final result = await registerUseCase(params);

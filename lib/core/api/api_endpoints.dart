@@ -9,10 +9,10 @@ class ApiEndpoints {
   static const String registerOrganizer = '/auth/register-organizer';
   static const String login = '/auth/login';
   static const String logout = '/auth/logout';
-  static const String currentUser = '/auth/me';
-  static const String refreshToken = '/auth/refresh';
-  static const String requestPasswordReset = '/auth/password/request-reset';
-  static const String resetPassword = '/auth/password/reset';
+  static const String currentUser = '/user'; // Updated from /auth/me
+  static const String refreshToken = '/auth/refresh'; // Kept for compatibility but not used
+  static const String requestPasswordReset = '/auth/forgot-password'; // Updated endpoint
+  static const String resetPassword = '/auth/reset-password'; // Updated endpoint
   static const String verifyEmail = '/auth/verify-email';
   static const String resendVerification = '/auth/resend-verification';
   

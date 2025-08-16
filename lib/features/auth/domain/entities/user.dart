@@ -20,6 +20,8 @@ class UserEntity extends Equatable {
   final String? profileImageUrl;
   final String? bio;
   final String? location;
+  final String? country; // Added field
+  final String? preferredCurrency; // Added field
   final DateTime createdAt;
   final DateTime updatedAt;
   
@@ -39,6 +41,8 @@ class UserEntity extends Equatable {
     this.profileImageUrl,
     this.bio,
     this.location,
+    this.country,
+    this.preferredCurrency,
     required this.createdAt,
     required this.updatedAt,
     this.businessName,
@@ -64,6 +68,8 @@ class UserEntity extends Equatable {
     profileImageUrl,
     bio,
     location,
+    country,
+    preferredCurrency,
     createdAt,
     updatedAt,
     businessName,

@@ -24,6 +24,24 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _confirmPasswordController = TextEditingController();
   bool _isLoading = false;
   bool _acceptTerms = false;
+  String? _selectedCountry = 'KE'; // Default to Kenya
+  String _selectedCurrency = 'KES'; // Default to KES
+  
+  // African countries
+  final List<Map<String, String>> _countries = [
+    {'code': 'KE', 'name': 'Kenya'},
+    {'code': 'NG', 'name': 'Nigeria'},
+    {'code': 'ZA', 'name': 'South Africa'},
+    {'code': 'GH', 'name': 'Ghana'},
+    {'code': 'UG', 'name': 'Uganda'},
+    {'code': 'TZ', 'name': 'Tanzania'},
+    {'code': 'EG', 'name': 'Egypt'},
+  ];
+  
+  // Supported currencies
+  final List<String> _currencies = [
+    'KES', 'NGN', 'ZAR', 'GHS', 'UGX', 'TZS', 'EGP', 'USD'
+  ];
 
   @override
   void dispose() {
@@ -59,6 +77,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
       phoneNumber: _phoneController.text.isNotEmpty 
           ? _phoneController.text.trim() 
           : null,
+      country: _selectedCountry,
+      preferredCurrency: _selectedCurrency,
     );
 
     setState(() => _isLoading = false);
@@ -116,6 +136,54 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       return Validators.phoneValidator(value);
                     }
                     return null;
+                  },
+                ),
+                const SizedBox(height: 16),
+                // Country Dropdown
+                DropdownButtonFormField<String>(
+                  value: _selectedCountry,
+                  decoration: InputDecoration(
+                    labelText: 'Country',
+                    prefixIcon: const Icon(Icons.location_on_outlined),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  items: _countries.map((country) {
+                    return DropdownMenuItem(
+                      value: country['code'],
+                      child: Text(country['name']!),
+                    );
+                  }).toList(),
+                  onChanged: (value) {
+                    setState(() => _selectedCountry = value);
+                  },
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please select your country';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 16),
+                // Currency Dropdown
+                DropdownButtonFormField<String>(
+                  value: _selectedCurrency,
+                  decoration: InputDecoration(
+                    labelText: 'Preferred Currency',
+                    prefixIcon: const Icon(Icons.monetization_on_outlined),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  items: _currencies.map((currency) {
+                    return DropdownMenuItem(
+                      value: currency,
+                      child: Text(currency),
+                    );
+                  }).toList(),
+                  onChanged: (value) {
+                    setState(() => _selectedCurrency = value!);
                   },
                 ),
                 const SizedBox(height: 16),

@@ -242,17 +242,14 @@ class ApiClient {
     );
   }
   
-  // Save authentication data
+  // Save authentication data (tokens never expire now)
   Future<void> saveAuthData({
     required String token,
-    String? refreshToken,
     Map<String, dynamic>? user,
   }) async {
     await _storage.write(key: 'access_token', value: token);
     
-    if (refreshToken != null) {
-      await _storage.write(key: 'refresh_token', value: refreshToken);
-    }
+    // No longer storing refresh token as tokens never expire
     
     if (user != null) {
       await _storage.write(key: 'user', value: user.toString());

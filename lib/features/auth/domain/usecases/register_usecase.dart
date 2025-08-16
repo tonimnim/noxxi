@@ -20,6 +20,8 @@ class RegisterParams extends Equatable {
   final String password;
   final String passwordConfirmation;
   final String? phoneNumber;
+  final String? country;
+  final String? preferredCurrency;
 
   const RegisterParams({
     required this.fullName,
@@ -27,6 +29,8 @@ class RegisterParams extends Equatable {
     required this.password,
     required this.passwordConfirmation,
     this.phoneNumber,
+    this.country,
+    this.preferredCurrency,
   });
 
   @override
@@ -36,5 +40,7 @@ class RegisterParams extends Equatable {
     password,
     passwordConfirmation,
     phoneNumber,
+    country,
+    preferredCurrency,
   ];
 }

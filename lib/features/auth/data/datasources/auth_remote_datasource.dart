@@ -33,7 +33,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       final authResponse = AuthResponseModel.fromJson(response);
       
       if (authResponse.isSuccess && authResponse.data?.user != null) {
-        // Save token
+        // Save token (never expires - 100 years)
         if (authResponse.data?.accessToken != null) {
           await apiClient.saveAuthData(
             token: authResponse.data!.accessToken!,
@@ -65,18 +65,20 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       final response = await apiClient.post<Map<String, dynamic>>(
         ApiEndpoints.register,
         data: {
-          'full_name': params.fullName,
+          'name': params.fullName, // Laravel expects 'name' not 'full_name'
           'email': params.email,
           'password': params.password,
           'password_confirmation': params.passwordConfirmation,
-          'phone_number': params.phoneNumber,
+          'phone': params.phoneNumber, // Laravel expects 'phone' not 'phone_number'
+          'country': params.country,
+          'preferred_currency': params.preferredCurrency,
         },
       );
 
       final authResponse = AuthResponseModel.fromJson(response);
       
       if (authResponse.isSuccess && authResponse.data?.user != null) {
-        // Save token if provided (auto-login after registration)
+        // Save token if provided (auto-login after registration, never expires)
         if (authResponse.data?.accessToken != null) {
           await apiClient.saveAuthData(
             token: authResponse.data!.accessToken!,
